@@ -14,7 +14,7 @@ dnd_datas, dnd_binaries, dnd_hidden = collect_all("windnd")
 bundle_datas: list = []
 bundle_binaries: list = []
 bundle_hidden: list = []
-for _pkg in ("babelfish", "subliminal", "guessit"):
+for _pkg in ("babelfish", "subliminal", "guessit", "stevedore", "dogpile"):
     _d, _b, _h = collect_all(_pkg)
     bundle_datas += _d
     bundle_binaries += _b
@@ -30,6 +30,7 @@ a = Analysis(
         "babelfish.data",
         "subliminal",
         "subliminal.cli.cli",
+        "click.testing",
         "guessit",
         "dogpile",
         "stevedore",

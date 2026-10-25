@@ -7,12 +7,16 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 from pathlib import Path
 
 VIDEO_EXTENSIONS = {".mkv", ".mp4", ".m4v", ".mov", ".avi", ".webm", ".ts", ".m2ts"}
 LOG_PATH = Path(os.environ.get("SUBDROP_LOG", Path(tempfile.gettempdir()) / "subdrop-last.log"))
 CRASH_LOG_PATH = Path(tempfile.gettempdir()) / "subdrop-crash.log"
 TRACE_LOG_PATH = Path(tempfile.gettempdir()) / "subdrop-trace.log"
+
+_subliminal_lock = threading.Lock()
+_subliminal_ready = False
 
 
 def trace(msg: str) -> None:
@@ -113,27 +117,26 @@ def _append_log(line: str) -> None:
         f.flush()
 
 
-def _frozen_subliminal_cmd(args: list[str]) -> list[str]:
-    """Re-invoke this EXE in CLI-only mode (see subdrop_gui.py --subliminal)."""
-    return [sys.executable, "--subliminal", *args]
+def _run_subliminal_inprocess(args: list[str]) -> None:
+    """Run subliminal inside this EXE (babelfish data must be bundled; see packaging spec)."""
+    from click.testing import CliRunner
+    from subliminal.cli.cli import subliminal
 
+    trace(f"subliminal inprocess args={args}")
+    _append_log(f"inprocess: {' '.join(args)}")
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(subliminal, args, catch_exceptions=False)
+    output = (result.output or "") + (result.stderr or "")
+    if result.exception:
+        import traceback as _tb
 
-def _run_subliminal_subprocess(args: list[str]) -> None:
-    """Separate process — safe with tkinter (never use CliRunner from a worker thread)."""
-    cmd = _frozen_subliminal_cmd(args)
-    _append_log(f"cmd: {' '.join(cmd)}")
-    with LOG_PATH.open("a", encoding="utf-8", errors="replace") as log:
-        log.write("\n--- subliminal ---\n")
-        log.flush()
-        proc = subprocess.run(
-            cmd,
-            stdout=log,
-            stderr=subprocess.STDOUT,
-            **_subprocess_kwargs(),
+        output += "\n" + "".join(
+            _tb.format_exception(type(result.exception), result.exception, result.exception.__traceback__)
         )
-    if proc.returncode != 0:
-        tail = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()[-16:]
-        raise RuntimeError("\n".join(tail) or f"subliminal failed (code {proc.returncode})")
+    _append_log(output)
+    if result.exit_code != 0:
+        tail = output.strip().splitlines()[-16:]
+        raise RuntimeError("\n".join(tail) or f"subliminal failed (exit {result.exit_code})")
 
 
 def subliminal_download_argv(lang_code: str, video: Path) -> list[str]:
@@ -152,19 +155,20 @@ def _subprocess_kwargs() -> dict:
 
 
 def ensure_subliminal() -> None:
+    global _subliminal_ready
     if _is_frozen():
-        cmd = _frozen_subliminal_cmd(["download", "--help"])
-        try:
-            proc = subprocess.run(
-                cmd,
-                capture_output=True,
-                timeout=120,
-                **_subprocess_kwargs(),
-            )
-        except (OSError, subprocess.TimeoutExpired) as e:
-            raise RuntimeError("subliminal is not available in this SubDrop build.") from e
-        if proc.returncode != 0:
-            raise RuntimeError("subliminal is not available in this SubDrop build.")
+        if _subliminal_ready:
+            return
+        with _subliminal_lock:
+            if _subliminal_ready:
+                return
+            try:
+                from subliminal.cli.cli import subliminal  # noqa: F401
+            except Exception as e:
+                trace(f"ensure_subliminal import failed: {e!r}")
+                raise RuntimeError(f"subliminal is not available in this SubDrop build: {e}") from e
+            _subliminal_ready = True
+            trace("ensure_subliminal import ok")
         return
 
     probe = find_subliminal_command() + ["download", "--help"]
@@ -207,7 +211,7 @@ def process_video(video: Path, lang_code: str) -> Path:
 
     if _is_frozen():
         _append_log(f"video: {video}")
-        _run_subliminal_subprocess(_download_cli_args(lang_code, video))
+        _run_subliminal_inprocess(_download_cli_args(lang_code, video))
     else:
         cmd = subliminal_download_argv(lang_code, video)
         with LOG_PATH.open("w", encoding="utf-8") as log:

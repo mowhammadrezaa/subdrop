@@ -11,10 +11,18 @@ if sys.platform == "win32" and getattr(sys, "frozen", False):
 
 # PyInstaller: child process runs subliminal without loading the GUI (see core.py).
 if __name__ == "__main__" and len(sys.argv) >= 2 and sys.argv[1] == "--subliminal":
-    sys.argv = ["subliminal"] + sys.argv[2:]
-    from subliminal.cli import cli
+    import traceback as _tb
 
-    cli()
+    sys.argv = ["subliminal"] + sys.argv[2:]
+    try:
+        from subliminal.cli.cli import cli
+
+        cli()
+    except SystemExit as exc:
+        raise SystemExit(exc.code if isinstance(exc.code, int) else 1) from None
+    except Exception:
+        _tb.print_exc()
+        raise SystemExit(1) from None
     raise SystemExit(0)
 
 import queue
