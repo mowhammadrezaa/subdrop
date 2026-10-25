@@ -10,19 +10,32 @@ ROOT = Path(SPECPATH).resolve().parent
 
 dnd_datas, dnd_binaries, dnd_hidden = collect_all("windnd")
 
+# babelfish (and subliminal) read ISO/language tables from package data at runtime.
+bundle_datas: list = []
+bundle_binaries: list = []
+bundle_hidden: list = []
+for _pkg in ("babelfish", "subliminal", "guessit"):
+    _d, _b, _h = collect_all(_pkg)
+    bundle_datas += _d
+    bundle_binaries += _b
+    bundle_hidden += _h
+
 a = Analysis(
     [str(ROOT / "subdrop_gui.py")],
     pathex=[str(ROOT)],
-    binaries=dnd_binaries,
-    datas=[(str(ROOT / "languages.json"), ".")] + dnd_datas,
+    binaries=dnd_binaries + bundle_binaries,
+    datas=[(str(ROOT / "languages.json"), ".")] + dnd_datas + bundle_datas,
     hiddenimports=[
         "babelfish",
+        "babelfish.data",
         "subliminal",
         "subliminal.cli.cli",
         "guessit",
         "dogpile",
         "stevedore",
+        "stevedore._cache",
         *dnd_hidden,
+        *bundle_hidden,
     ],
     hookspath=[],
     hooksconfig={},
