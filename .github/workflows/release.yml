@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: macOS DMG
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build SubDrop.app and DMG
+        run: |
+          chmod +x install.sh packaging/build-macos-dmg.sh build_icon.sh fetch.sh
+          ./packaging/build-macos-dmg.sh
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: dist/SubDrop-mac.dmg
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows EXE
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build SubDrop.exe
+        shell: pwsh
+        run: |
+          ./packaging/build-windows.ps1
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/SubDrop.exe
+          if-no-files-found: error
+
+  build-linux:
+    name: Linux packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create Linux distribution files
+        run: |
+          chmod +x packaging/install-linux.sh generate_languages.py
+          mkdir -p dist
+          python3 generate_languages.py languages.json
+          cp packaging/install-linux.sh dist/install-linux.sh
+          tar -czf dist/subdrop-src.tar.gz \
+            --exclude dist \
+            --exclude .git \
+            README.md requirements.txt subdrop_gui.py subdrop_cli.py \
+            generate_languages.py languages.json \
+            subdrop packaging install.sh fetch.sh SubDropApp.swift \
+            build_icon.sh AppIcon.icns AppIcon-1024.png .github
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            dist/install-linux.sh
+            dist/subdrop-src.tar.gz
+          if-no-files-found: error
+
+  github-release:
+    name: Publish GitHub Release
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release-assets/macos-dmg/SubDrop-mac.dmg
+            release-assets/windows-exe/SubDrop.exe
+            release-assets/linux-packages/install-linux.sh
+            release-assets/linux-packages/subdrop-src.tar.gz

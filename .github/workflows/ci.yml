@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile macOS app
+        run: |
+          chmod +x install.sh
+          ./install.sh
+          test -f "$HOME/Applications/SubDrop.app/Contents/MacOS/SubDrop"
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build EXE
+        shell: pwsh
+        run: ./packaging/build-windows.ps1
+      - name: Verify EXE
+        shell: pwsh
+        run: Test-Path dist/SubDrop.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Smoke test core
+        run: |
+          python3 generate_languages.py languages.json
+          PYTHONPATH=. python3 -c "from subdrop.core import load_languages; assert len(load_languages()) > 10"
