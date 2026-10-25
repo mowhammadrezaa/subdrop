@@ -43,15 +43,10 @@ open dist/SubDrop-mac.dmg
 ```
 
 1. Open **`SubDrop-mac.dmg`**
-2. Double-click **`Install SubDrop`** — it installs to `~/Applications`, clears the usual “damaged app” quarantine automatically, and opens SubDrop.
+2. Double-click **`READ FIRST.html`** (Safari) — follow **Install SubDrop → Privacy & Security → Open Anyway** before the installer can run.
+3. Double-click **`Install SubDrop`**, click **Install SubDrop**, then open **SubDrop** from `~/Applications`.
 
-If macOS says **Apple could not verify** Install SubDrop:
-
-1. Double-click **Install SubDrop** once (it may be blocked).
-2. **System Settings → Privacy & Security** → scroll down → **Open Anyway** for Install SubDrop.
-3. Double-click **Install SubDrop** again → **Open**.
-
-The installer also has an **Open Settings** button with these steps. Fully automatic installs need Apple notarization — see `packaging/NOTARIZATION.md` (maintainers).
+The installer does not auto-launch SubDrop (that can leave a stuck wait cursor after **Open Anyway**). Fully silent installs need Apple notarization — see `packaging/NOTARIZATION.md`.
 
 See **`START HERE.txt`** on the disk image. Requires **Subliminal** (`pip3 install subliminal`).
 

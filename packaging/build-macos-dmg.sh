@@ -22,6 +22,7 @@ elif command -v codesign >/dev/null 2>&1; then
   xattr -cr "$STAGE/SubDrop.app" 2>/dev/null || true
   xattr -cr "$STAGE/Install SubDrop.app" 2>/dev/null || true
 fi
+cp "$ROOT/packaging/macos-read-first.html" "$STAGE/READ FIRST.html"
 cp "$ROOT/packaging/MACOS-INSTALL.txt" "$STAGE/START HERE.txt"
 cp "$ROOT/README.md" "$STAGE/README.txt"
 

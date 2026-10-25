@@ -1,20 +1,4 @@
--- Double-click installer on the SubDrop DMG (no Terminal commands for users).
-
-on open_privacy_settings()
-	try
-		do shell script "open 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension'"
-	on error
-		try
-			do shell script "open 'x-apple.systempreferences:com.apple.preference.security'"
-		end try
-	end try
-end open_privacy_settings
-
-on installer_welcome()
-	set msg to "This installs SubDrop on your Mac (UTF-8 subtitles beside your videos)." & return & return & "If macOS says Apple could not verify Install SubDrop (common for free downloads), do this once:" & return & return & "  1. Install SubDrop  →  Privacy & Security  →  Open Anyway" & return & return & "  2. Double-click Install SubDrop again, then click Open." & return & return & "Tip: click Open Privacy & Security below, scroll to Security, then choose Open Anyway for Install SubDrop." & return & return & "When that is done (or if macOS did not block you), click Install SubDrop."
-	set choice to button returned of (display dialog msg buttons {"Open Privacy & Security", "Install SubDrop", "Cancel"} default button 2 cancel button 3 with title "Install SubDrop" with icon note)
-	return choice
-end installer_welcome
+-- Runs only after macOS has allowed Install SubDrop (see READ FIRST.html on the DMG).
 
 on run_install()
 	set installerPOSIX to POSIX path of (path to me)
@@ -31,27 +15,18 @@ on run_install()
 	do shell script "rm -rf " & quoted form of dstApp & " && ditto " & quoted form of srcApp & " " & quoted form of dstApp
 	do shell script "xattr -cr " & quoted form of dstApp
 	do shell script "codesign --force --deep --sign - " & quoted form of dstApp & " 2>/dev/null || true"
-	do shell script "open " & quoted form of dstApp
-
-	display dialog "SubDrop is installed and opening now." & return & return & "Find it in Applications (in your home folder) or search Spotlight for SubDrop." buttons {"OK"} default button 1 with title "Install SubDrop" with icon note
 end run_install
 
 on run
-	set choice to installer_welcome()
+	set msg to "Click Install SubDrop to copy the app to your Applications folder and remove the “damaged app” quarantine." & return & return & "If you have not allowed Install SubDrop in System Settings yet, close this window and follow READ FIRST.html on this disk first:" & return & return & "  Install SubDrop  →  Privacy & Security  →  Open Anyway" & return & return & "After installing, open SubDrop from Applications (in your home folder). We do not auto-launch it, so macOS stays responsive."
+	set choice to button returned of (display dialog msg buttons {"Cancel", "Install SubDrop"} default button 2 cancel button 1 with title "Install SubDrop" with icon note)
 	if choice is "Cancel" then
-		return
-	end if
-	if choice is "Open Privacy & Security" then
-		open_privacy_settings()
 		return
 	end if
 	try
 		run_install()
+		display dialog "SubDrop is installed." & return & return & "Open it from Applications in your home folder, or search Spotlight for SubDrop." buttons {"OK"} default button 1 with title "Install SubDrop" with icon note
 	on error errMsg number errNum
-		set helpMsg to "Install could not finish:" & return & errMsg & return & return & "If macOS blocked Install SubDrop:" & return & return & "  Install SubDrop  →  Privacy & Security  →  Open Anyway" & return & return & "Then double-click Install SubDrop again."
-		set choice2 to button returned of (display dialog helpMsg buttons {"Open Privacy & Security", "OK"} default button 1 with title "Install SubDrop" with icon stop)
-		if choice2 is "Open Privacy & Security" then
-			open_privacy_settings()
-		end if
+		display dialog "Install could not finish:" & return & errMsg & return & return & "If Install SubDrop was blocked, use READ FIRST.html on this disk:" & return & "  Install SubDrop  →  Privacy & Security  →  Open Anyway" buttons {"OK"} default button 1 with title "Install SubDrop" with icon stop
 	end try
 end run

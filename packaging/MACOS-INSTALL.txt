@@ -4,28 +4,19 @@ Install SubDrop (macOS)
 macOS may say Apple “could not verify” Install SubDrop or SubDrop.
 That is Gatekeeper (not a virus). SubDrop is not notarized yet.
 
-ONE-TIME FIX (no Terminal)
---------------------------
-1. Double-click  Install SubDrop  once (it may be blocked).
+READ THIS BEFORE INSTALL SUBDROP
+--------------------------------
+The installer window does NOT appear until macOS allows Install SubDrop.
 
-2. Open  System Settings  →  Privacy & Security .
+Open  READ FIRST.html  on this disk (opens in Safari) for the full steps.
 
-3. Scroll down in Security. You should see a message about
-   Install SubDrop being blocked.
+Short version (no Terminal):
+1. Double-click  Install SubDrop  once (may be blocked).
+2. System Settings  →  Privacy & Security  →  Open Anyway .
+3. Double-click  Install SubDrop  again →  Open .
+4. Click  Install SubDrop  in the dialog, then open SubDrop from Applications.
 
-4. Click  Open Anyway , then confirm.
-
-5. Double-click  Install SubDrop  again → click  Open .
-
-   Alternative to step 4–5: right-click  Install SubDrop  →  Open  →  Open .
-
-6. The installer copies SubDrop, removes the “damaged app” quarantine,
-   and launches the app.
-
-EASIEST
--------
-Double-click  Install SubDrop  and follow the on-screen dialog
-(“Open Settings” opens Privacy & Security for you).
+The installer does not auto-launch SubDrop (avoids a stuck colorful wait cursor).
 
 Subliminal (required for downloads)
 -----------------------------------
