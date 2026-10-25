@@ -11,6 +11,7 @@ from pathlib import Path
 
 VIDEO_EXTENSIONS = {".mkv", ".mp4", ".m4v", ".mov", ".avi", ".webm", ".ts", ".m2ts"}
 LOG_PATH = Path(os.environ.get("SUBDROP_LOG", Path(tempfile.gettempdir()) / "subdrop-last.log"))
+CRASH_LOG_PATH = Path(tempfile.gettempdir()) / "subdrop-crash.log"
 
 
 def config_path() -> Path:
@@ -62,8 +63,12 @@ def normalize_srt(path: Path) -> None:
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
-def subliminal_download_argv(lang_code: str, video: Path) -> list[str]:
-    tail = [
+def _is_frozen() -> bool:
+    return getattr(sys, "frozen", False)
+
+
+def _download_cli_args(lang_code: str, video: Path) -> list[str]:
+    return [
         "download",
         "-f",
         "-l",
@@ -77,9 +82,35 @@ def subliminal_download_argv(lang_code: str, video: Path) -> list[str]:
         "-s",
         str(video),
     ]
-    if getattr(sys, "frozen", False):
-        # Same .exe, CLI mode — must not start a second GUI window.
-        return [sys.executable, "--subliminal", *tail]
+
+
+def _write_log(text: str) -> None:
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    LOG_PATH.write_text(text, encoding="utf-8", errors="replace")
+
+
+def _run_subliminal_inprocess(args: list[str]) -> None:
+    """Run subliminal inside this process (required for PyInstaller one-file EXE)."""
+    from click.testing import CliRunner
+    from subliminal.cli.cli import subliminal
+
+    runner = CliRunner()
+    result = runner.invoke(subliminal, args, catch_exceptions=False)
+    output = result.output or ""
+    if result.exception:
+        import traceback
+
+        output += "\n" + "".join(
+            traceback.format_exception(type(result.exception), result.exception, result.exception.__traceback__)
+        )
+    _write_log(output)
+    if result.exit_code != 0:
+        tail = output.strip().splitlines()[-12:]
+        raise RuntimeError("\n".join(tail) or f"subliminal failed (exit {result.exit_code})")
+
+
+def subliminal_download_argv(lang_code: str, video: Path) -> list[str]:
+    tail = _download_cli_args(lang_code, video)
     exe = shutil.which("subliminal")
     if exe:
         return [exe, *tail]
@@ -94,14 +125,20 @@ def _subprocess_kwargs() -> dict:
 
 
 def ensure_subliminal() -> None:
-    if getattr(sys, "frozen", False):
-        probe = [sys.executable, "--subliminal", "download", "--help"]
-    else:
-        probe = find_subliminal_command() + ["download", "--help"]
+    if _is_frozen():
+        from click.testing import CliRunner
+        from subliminal.cli.cli import subliminal
+
+        result = CliRunner().invoke(subliminal, ["download", "--help"])
+        if result.exit_code != 0:
+            raise RuntimeError("subliminal is not available in this SubDrop build.")
+        return
+
+    probe = find_subliminal_command() + ["download", "--help"]
     try:
         subprocess.run(probe, capture_output=True, check=True, timeout=60, **_subprocess_kwargs())
     except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
-        raise RuntimeError("subliminal is not available in this SubDrop build.") from e
+        raise RuntimeError("subliminal is not installed. Run: pip install subliminal") from e
 
 
 def find_subliminal_command() -> list[str]:
@@ -135,20 +172,20 @@ def process_video(video: Path, lang_code: str) -> Path:
     out = video.with_suffix(".srt")
     alt = video.parent / f"{video.stem}.{lang_code}.srt"
 
-    cmd = subliminal_download_argv(lang_code, video)
-
-    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with LOG_PATH.open("w", encoding="utf-8") as log:
-        proc = subprocess.run(
-            cmd,
-            stdout=log,
-            stderr=subprocess.STDOUT,
-            **_subprocess_kwargs(),
-        )
-
-    if proc.returncode != 0:
-        tail = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()[-8:]
-        raise RuntimeError("\n".join(tail) or f"subliminal failed (code {proc.returncode})")
+    if _is_frozen():
+        _run_subliminal_inprocess(_download_cli_args(lang_code, video))
+    else:
+        cmd = subliminal_download_argv(lang_code, video)
+        with LOG_PATH.open("w", encoding="utf-8") as log:
+            proc = subprocess.run(
+                cmd,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                **_subprocess_kwargs(),
+            )
+        if proc.returncode != 0:
+            tail = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()[-12:]
+            raise RuntimeError("\n".join(tail) or f"subliminal failed (code {proc.returncode})")
 
     if not out.is_file() and alt.is_file():
         shutil.move(str(alt), str(out))

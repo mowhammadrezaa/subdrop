@@ -18,6 +18,8 @@ a = Analysis(
     hiddenimports=[
         "babelfish",
         "subliminal",
+        "subliminal.cli.cli",
+        "click.testing",
         "guessit",
         "dogpile",
         "stevedore",

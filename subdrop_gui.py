@@ -13,6 +13,7 @@ if __name__ == "__main__" and len(sys.argv) >= 2 and sys.argv[1] == "--sublimina
     raise SystemExit(0)
 
 import threading
+import traceback
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -22,11 +23,45 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from subdrop.core import (  # noqa: E402
+    CRASH_LOG_PATH,
+    LOG_PATH,
     load_languages,
     process_paths,
     read_default_language,
     write_default_language,
 )
+
+
+def _decode_dropped_path(raw: object) -> Path:
+    if isinstance(raw, bytes):
+        text = None
+        for encoding in ("utf-8", "mbcs", "latin-1"):
+            try:
+                text = raw.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        text = (text or raw.decode("latin-1", errors="replace")).strip().strip("\x00")
+    else:
+        text = str(raw).strip().strip("\x00")
+    if text.startswith("{") and text.endswith("}"):
+        text = text[1:-1]
+    return Path(text)
+
+
+def install_exception_hooks() -> None:
+    def log_exc(exc_type, exc, tb) -> None:
+        try:
+            CRASH_LOG_PATH.write_text(
+                "".join(traceback.format_exception(exc_type, exc, tb)),
+                encoding="utf-8",
+            )
+        except OSError:
+            pass
+
+    sys.excepthook = log_exc
+    if hasattr(threading, "excepthook"):
+        threading.excepthook = lambda args: log_exc(args.exc_type, args.exc_value, args.exc_traceback)  # type: ignore[misc]
 
 
 class SubDropApp(tk.Tk):
@@ -129,12 +164,18 @@ class SubDropApp(tk.Tk):
                 import windnd  # type: ignore
 
                 def on_drop(files: list[bytes]) -> None:
-                    paths = []
-                    for raw in files:
-                        text = raw.decode("utf-8") if isinstance(raw, bytes) else str(raw)
-                        paths.append(Path(text.strip()))
-                    if paths:
-                        self.after(0, lambda: self._run_jobs(paths))
+                    try:
+                        paths = [_decode_dropped_path(raw) for raw in files]
+                        if paths:
+                            self.after(0, lambda p=list(paths): self._run_jobs(p))
+                    except Exception as exc:
+                        self.after(
+                            0,
+                            lambda: messagebox.showerror(
+                                "SubDrop",
+                                f"Could not read dropped files:\n{exc}",
+                            ),
+                        )
 
                 windnd.hook_dropfiles(self, func=on_drop)
                 self._dnd_enabled = True
@@ -219,14 +260,30 @@ class SubDropApp(tk.Tk):
             try:
                 ok, fail, messages = process_paths(paths, self.lang_code)
                 text = "\n".join(messages[-8:])
+                log_hint = f"\n\nLog: {LOG_PATH}"
                 if fail:
-                    self.after(0, lambda: messagebox.showwarning("SubDrop", text or "Some downloads failed."))
+                    self.after(
+                        0,
+                        lambda: messagebox.showwarning(
+                            "SubDrop", (text or "Some downloads failed.") + log_hint
+                        ),
+                    )
                 elif ok:
-                    self.after(0, lambda: messagebox.showinfo("SubDrop", text or f"Done — {ok} file(s)."))
+                    self.after(
+                        0,
+                        lambda: messagebox.showinfo("SubDrop", text or f"Done — {ok} file(s)."),
+                    )
                 else:
                     self.after(0, lambda: messagebox.showwarning("SubDrop", "No videos processed."))
             except Exception as e:
-                self.after(0, lambda: messagebox.showerror("SubDrop", str(e)))
+                CRASH_LOG_PATH.write_text(traceback.format_exc(), encoding="utf-8")
+                self.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        "SubDrop",
+                        f"{e}\n\nDetails: {LOG_PATH}\nCrash: {CRASH_LOG_PATH}",
+                    ),
+                )
             finally:
                 self.after(0, self._idle)
 
@@ -244,6 +301,7 @@ class SubDropApp(tk.Tk):
 
 
 def main() -> None:
+    install_exception_hooks()
     SubDropApp().mainloop()
 
 
