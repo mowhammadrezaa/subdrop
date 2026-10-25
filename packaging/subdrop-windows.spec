@@ -1,18 +1,28 @@
 # PyInstaller spec — build on Windows: pyinstaller packaging/subdrop-windows.spec
 # -*- mode: python ; coding: utf-8 -*-
 
-import sys
 from pathlib import Path
+
+from PyInstaller.utils.hooks import collect_all
 
 # SPECPATH is the directory that contains this .spec file (packaging/).
 ROOT = Path(SPECPATH).resolve().parent
 
+dnd_datas, dnd_binaries, dnd_hidden = collect_all("tkinterdnd2")
+
 a = Analysis(
     [str(ROOT / "subdrop_gui.py")],
     pathex=[str(ROOT)],
-    binaries=[],
-    datas=[(str(ROOT / "languages.json"), ".")],
-    hiddenimports=["babelfish", "subliminal", "guessit", "dogpile", "stevedore"],
+    binaries=dnd_binaries,
+    datas=[(str(ROOT / "languages.json"), ".")] + dnd_datas,
+    hiddenimports=[
+        "babelfish",
+        "subliminal",
+        "guessit",
+        "dogpile",
+        "stevedore",
+        *dnd_hidden,
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

@@ -112,6 +112,7 @@ class SubDropApp(tk.Tk):
         self.status = tk.Label(self, text="", fg="gray", wraplength=500)
         self.status.pack(fill=tk.X, padx=12, pady=(0, 10))
         self.status.config(text=f"Language: {self.lang_name} ({self.lang_code})")
+        self._dnd_enabled = False
 
     def _register_dnd(self) -> None:
         try:
@@ -119,8 +120,12 @@ class SubDropApp(tk.Tk):
 
             self.drop.drop_target_register(DND_FILES)
             self.drop.dnd_bind("<<Drop>>", self._on_drop)
-        except ImportError:
-            pass
+            self._dnd_enabled = True
+        except (ImportError, tk.TclError):
+            # Common in PyInstaller builds when the tkdnd Tcl extension is missing.
+            self.drop_msg.config(
+                text="Use “Choose video files…” below\n(drag-and-drop unavailable in this build)"
+            )
 
     def _toggle_picker(self) -> None:
         if self.picker_open:
@@ -197,22 +202,17 @@ class SubDropApp(tk.Tk):
 
     def _idle(self) -> None:
         self.busy = False
-        self.drop_msg.config(text="Drag and drop video files here\n(or use the button below)")
+        if self._dnd_enabled:
+            self.drop_msg.config(text="Drag and drop video files here\n(or use the button below)")
+        else:
+            self.drop_msg.config(
+                text="Use “Choose video files…” below\n(drag-and-drop unavailable in this build)"
+            )
         self.status.config(text=f"Language: {self.lang_name} ({self.lang_code})")
 
 
 def main() -> None:
-    try:
-        from tkinterdnd2 import TkinterDnD  # type: ignore
-
-        class DndSubDrop(TkinterDnD.Tk, SubDropApp):
-            def __init__(self) -> None:
-                TkinterDnD.Tk.__init__(self)
-                SubDropApp.__init__(self)
-
-        DndSubDrop().mainloop()
-    except ImportError:
-        SubDropApp().mainloop()
+    SubDropApp().mainloop()
 
 
 if __name__ == "__main__":
