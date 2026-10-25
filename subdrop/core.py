@@ -12,6 +12,21 @@ from pathlib import Path
 VIDEO_EXTENSIONS = {".mkv", ".mp4", ".m4v", ".mov", ".avi", ".webm", ".ts", ".m2ts"}
 LOG_PATH = Path(os.environ.get("SUBDROP_LOG", Path(tempfile.gettempdir()) / "subdrop-last.log"))
 CRASH_LOG_PATH = Path(tempfile.gettempdir()) / "subdrop-crash.log"
+TRACE_LOG_PATH = Path(tempfile.gettempdir()) / "subdrop-trace.log"
+
+
+def trace(msg: str) -> None:
+    """Append-only log safe from any thread (windnd runs off the tk main thread)."""
+    import datetime
+
+    line = f"{datetime.datetime.now(datetime.timezone.utc).isoformat()} {msg}\n"
+    try:
+        TRACE_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with TRACE_LOG_PATH.open("a", encoding="utf-8", errors="replace") as f:
+            f.write(line)
+            f.flush()
+    except OSError:
+        pass
 
 
 def config_path() -> Path:
@@ -219,8 +234,10 @@ def process_video(video: Path, lang_code: str) -> Path:
 
 
 def process_paths(paths: list[Path], lang_code: str) -> tuple[int, int, list[str]]:
+    trace(f"process_paths lang={lang_code} n={len(paths)}")
     _write_log(f"SubDrop process_paths lang={lang_code} paths={len(paths)}\n")
     ensure_subliminal()
+    trace("ensure_subliminal ok")
     _append_log("ensure_subliminal ok")
     ok, fail = 0, 0
     messages: list[str] = []

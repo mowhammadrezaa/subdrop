@@ -17,6 +17,7 @@ if __name__ == "__main__" and len(sys.argv) >= 2 and sys.argv[1] == "--sublimina
     cli()
     raise SystemExit(0)
 
+import queue
 import threading
 import traceback
 import tkinter as tk
@@ -30,9 +31,11 @@ if str(ROOT) not in sys.path:
 from subdrop.core import (  # noqa: E402
     CRASH_LOG_PATH,
     LOG_PATH,
+    TRACE_LOG_PATH,
     load_languages,
     process_paths,
     read_default_language,
+    trace,
     write_default_language,
 )
 
@@ -93,9 +96,11 @@ class SubDropApp(tk.Tk):
         self.busy = False
         self._filtered: list[dict[str, str]] = []
         self._dnd_enabled = False
+        self._drop_queue: queue.Queue[list[Path] | str] = queue.Queue()
 
         self._build_ui()
         self._register_dnd()
+        self.after(150, self._poll_drop_queue)
 
     def _name_for_code(self, code: str) -> str:
         for item in self.languages:
@@ -176,23 +181,25 @@ class SubDropApp(tk.Tk):
             try:
                 import windnd  # type: ignore
 
-                def on_drop(files: list[bytes]) -> None:
+                def on_drop(files: object) -> None:
+                    # windnd calls this from a non-tk thread — never touch self.after() here.
+                    trace(f"windnd on_drop files={files!r}")
                     try:
-                        paths = [_decode_dropped_path(raw) for raw in files]
+                        raw_list = list(files) if files is not None else []
+                        paths = [_decode_dropped_path(raw) for raw in raw_list]
+                        trace(f"windnd decoded paths={[str(p) for p in paths]}")
                         if paths:
-                            self.after(0, lambda p=list(paths): self._run_jobs(p))
+                            self._drop_queue.put(list(paths))
                     except Exception as exc:
-                        self.after(
-                            0,
-                            lambda: messagebox.showerror(
-                                "SubDrop",
-                                f"Could not read dropped files:\n{exc}",
-                            ),
-                        )
+                        trace(f"windnd on_drop error: {exc!r}")
+                        self._drop_queue.put(f"drop:{exc}")
 
-                windnd.hook_dropfiles(self, func=on_drop)
+                windnd.hook_dropfiles(self.drop, func=on_drop)
                 self._dnd_enabled = True
+                trace("windnd hooked on drop frame")
                 return
+            except Exception as exc:
+                trace(f"windnd setup failed: {exc!r}")
             except Exception:
                 pass
 
@@ -210,6 +217,20 @@ class SubDropApp(tk.Tk):
         self.drop_msg.config(
             text="Use “Choose video files…” below\n(drag-and-drop unavailable in this build)"
         )
+
+    def _poll_drop_queue(self) -> None:
+        try:
+            while True:
+                item = self._drop_queue.get_nowait()
+                if isinstance(item, str):
+                    if item.startswith("drop:"):
+                        messagebox.showerror("SubDrop", f"Could not read dropped files:\n{item[5:]}")
+                    continue
+                trace(f"main thread _run_jobs from queue n={len(item)}")
+                self._run_jobs(item)
+        except queue.Empty:
+            pass
+        self.after(150, self._poll_drop_queue)
 
     def _toggle_picker(self) -> None:
         if self.picker_open:
@@ -263,6 +284,7 @@ class SubDropApp(tk.Tk):
             self._run_jobs(paths)
 
     def _run_jobs(self, paths: list[Path]) -> None:
+        trace(f"_run_jobs busy={self.busy} paths={[str(p) for p in paths]}")
         if self.busy:
             return
         self.busy = True
@@ -270,6 +292,7 @@ class SubDropApp(tk.Tk):
         self.drop_msg.config(text="Downloading subtitles…")
 
         def work() -> None:
+            trace("worker thread started")
             try:
                 ok, fail, messages = process_paths(paths, self.lang_code)
                 text = "\n".join(messages[-8:])
@@ -289,7 +312,13 @@ class SubDropApp(tk.Tk):
                 else:
                     self.after(0, lambda: messagebox.showwarning("SubDrop", "No videos processed."))
             except Exception as e:
-                CRASH_LOG_PATH.write_text(traceback.format_exc(), encoding="utf-8")
+                trace(f"worker exception: {e!r}")
+                try:
+                    with CRASH_LOG_PATH.open("a", encoding="utf-8") as f:
+                        f.write(traceback.format_exc())
+                        f.flush()
+                except OSError:
+                    pass
                 self.after(
                     0,
                     lambda: messagebox.showerror(
@@ -317,6 +346,7 @@ def main() -> None:
     install_exception_hooks()
     try:
         LOG_PATH.write_text(f"SubDrop started argv={sys.argv!r}\n", encoding="utf-8")
+        trace(f"SubDrop started argv={sys.argv!r} trace={TRACE_LOG_PATH}")
     except OSError:
         pass
     SubDropApp().mainloop()
