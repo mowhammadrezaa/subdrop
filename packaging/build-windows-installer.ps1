@@ -14,6 +14,8 @@ if (-not (Test-Path "$Root\dist\SubDrop.exe")) {
 if ($Version -eq "") {
     if ($env:GITHUB_REF -match 'refs/tags/v(.+)$') {
         $Version = $Matches[1]
+    } elseif ($env:GITHUB_REF_NAME -match '^v(.+)$') {
+        $Version = $Matches[1]
     } else {
         $tag = git -C $Root describe --tags --abbrev=0 2>$null
         if ($tag -match '^v(.+)$') {
