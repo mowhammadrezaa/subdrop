@@ -5,7 +5,7 @@ $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $Root
 
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pyinstaller
+python -m pip install -r requirements.txt pyinstaller pillow
 python generate_languages.py languages.json
 
 pyinstaller --noconfirm --clean packaging/subdrop-windows.spec
