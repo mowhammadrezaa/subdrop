@@ -42,7 +42,18 @@ Pre-built artifacts are published on **[GitHub Releases](https://github.com/mowh
 open dist/SubDrop-mac.dmg
 ```
 
-Drag **SubDrop.app** to **Applications**. Requires **Subliminal** installed (`pip3 install subliminal`).
+Drag **SubDrop.app** to **Applications**.
+
+If macOS says the app is **“damaged”** (common for unsigned downloads), remove the quarantine flag — the app is not corrupted:
+
+```bash
+xattr -cr ~/Applications/SubDrop.app
+# or: xattr -cr /Applications/SubDrop.app
+```
+
+Then open SubDrop again (or right-click → **Open** the first time). The DMG includes **If macOS says damaged, read this.txt** with the same steps.
+
+Requires **Subliminal** installed (`pip3 install subliminal`).
 
 ### Windows installer (end users)
 

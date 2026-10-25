@@ -73,5 +73,10 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
+# Ad-hoc sign so the binary is a valid macOS app bundle (not a Developer ID release).
+if command -v codesign >/dev/null 2>&1; then
+  codesign --force --deep --sign - "$APP" 2>/dev/null || true
+fi
+
 echo "Installed: $APP"
 echo "Open it from Applications — the window stays open for drag-and-drop."

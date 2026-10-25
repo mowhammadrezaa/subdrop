@@ -1,0 +1,27 @@
+Install SubDrop (macOS)
+=======================
+
+1. Drag SubDrop.app into the Applications folder (shortcut on this disk).
+
+2. If macOS says SubDrop is "damaged" or won't open:
+   This is usually Gatekeeper + download quarantine, not a broken app.
+
+   Open Terminal and run ONE of these (use the path where you installed):
+
+     xattr -cr ~/Applications/SubDrop.app
+
+   or
+
+     xattr -cr /Applications/SubDrop.app
+
+   Then open SubDrop from Applications again.
+
+   Alternative: right-click SubDrop → Open → Open (first time only).
+
+3. SubDrop needs Subliminal for downloads:
+
+     pip3 install subliminal
+
+   Internet is required for OpenSubtitles.
+
+Report issues: m.hosseini.eng@outlook.com
