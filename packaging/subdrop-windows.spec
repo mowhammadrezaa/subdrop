@@ -4,7 +4,8 @@
 import sys
 from pathlib import Path
 
-ROOT = Path(SPECPATH).resolve().parent.parent
+# SPECPATH is the directory that contains this .spec file (packaging/).
+ROOT = Path(SPECPATH).resolve().parent
 
 a = Analysis(
     [str(ROOT / "subdrop_gui.py")],

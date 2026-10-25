@@ -9,6 +9,12 @@ python -m pip install -r requirements.txt pyinstaller
 python generate_languages.py languages.json
 
 pyinstaller --noconfirm --clean packaging/subdrop-windows.spec
+if ($LASTEXITCODE -ne 0) {
+  throw "PyInstaller failed with exit code $LASTEXITCODE"
+}
+if (-not (Test-Path "$Root\dist\SubDrop.exe")) {
+  throw "dist\SubDrop.exe was not created"
+}
 
 Write-Host ""
 Write-Host "Built: $Root\dist\SubDrop.exe"

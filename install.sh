@@ -14,7 +14,8 @@ swiftc -O -parse-as-library "$ROOT/SubDropApp.swift" \
 
 cp "$ROOT/fetch.sh" "$RES/fetch.sh"
 chmod +x "$RES/fetch.sh"
-python3 "$ROOT/generate_languages.py" "$RES/languages.json"
+python3 "$ROOT/generate_languages.py" "$RES/languages.json" \
+  || cp "$ROOT/languages.json" "$RES/languages.json"
 
 if [[ -f "$ROOT/AppIcon.icns" ]]; then
   cp "$ROOT/AppIcon.icns" "$RES/AppIcon.icns"
