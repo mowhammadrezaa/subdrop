@@ -117,8 +117,37 @@ def _append_log(line: str) -> None:
         f.flush()
 
 
+def _patch_dogpile_dbm_for_frozen() -> None:
+    """PyInstaller builds often ship without a working stdlib dbm backend on Windows."""
+    if not _is_frozen():
+        return
+    import dogpile.cache.region as region_mod
+
+    if getattr(region_mod.CacheRegion, "_subdrop_dbm_patch", False):
+        return
+
+    _orig_configure = region_mod.CacheRegion.configure
+
+    def configure(self, backend, expiration_time=None, arguments=None, **kwargs):
+        if backend == "dogpile.cache.dbm":
+            trace("dogpile: using memory cache instead of dbm in frozen build")
+            backend = "dogpile.cache.memory"
+            arguments = None
+        return _orig_configure(
+            self,
+            backend,
+            expiration_time=expiration_time,
+            arguments=arguments,
+            **kwargs,
+        )
+
+    region_mod.CacheRegion.configure = configure  # type: ignore[method-assign]
+    region_mod.CacheRegion._subdrop_dbm_patch = True
+
+
 def _run_subliminal_inprocess(args: list[str]) -> None:
     """Run subliminal inside this EXE (babelfish data must be bundled; see packaging spec)."""
+    _patch_dogpile_dbm_for_frozen()
     from click.testing import CliRunner
     from subliminal.cli.cli import subliminal
 
@@ -163,6 +192,7 @@ def ensure_subliminal() -> None:
             if _subliminal_ready:
                 return
             try:
+                _patch_dogpile_dbm_for_frozen()
                 from subliminal.cli.cli import subliminal  # noqa: F401
             except Exception as e:
                 trace(f"ensure_subliminal import failed: {e!r}")
