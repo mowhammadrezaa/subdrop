@@ -1,25 +1,17 @@
-Install SubDrop (macOS)
-=======================
+SubDrop on macOS
+================
 
-macOS may say Apple “could not verify” Install SubDrop or SubDrop.
-That is Gatekeeper (not a virus). SubDrop is not notarized yet.
+1. Open READ FIRST.html on this disk (Safari).
 
-READ THIS BEFORE INSTALL SUBDROP
---------------------------------
-The installer window does NOT appear until macOS allows Install SubDrop.
+2. Drag SubDrop.app to Applications.
 
-Open  READ FIRST.html  on this disk (opens in Safari) for the full steps.
+3. If macOS blocks SubDrop:
+   System Settings → Privacy & Security → Open Anyway (for SubDrop).
 
-Short version (no Terminal):
-1. Double-click  Install SubDrop  once (may be blocked).
-2. System Settings  →  Privacy & Security  →  Open Anyway .
-3. Double-click  Install SubDrop  again →  Open .
-4. Click  Install SubDrop  in the dialog, then open SubDrop from Applications.
+4. Open SubDrop from Applications.
 
-The installer does not auto-launch SubDrop (avoids a stuck colorful wait cursor).
+   SubDrop → Privacy & Security → Open Anyway
 
-Subliminal (required for downloads)
------------------------------------
-  pip3 install subliminal
+Subliminal: pip3 install subliminal
 
 Report issues: m.hosseini.eng@outlook.com

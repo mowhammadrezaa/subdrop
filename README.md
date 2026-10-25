@@ -30,7 +30,7 @@ Pre-built artifacts are published on **[GitHub Releases](https://github.com/mowh
 
 | File | Platform | Install |
 |------|----------|---------|
-| **`SubDrop-mac.dmg`** | macOS | Open DMG → double-click **Install SubDrop** (fixes “damaged” automatically). |
+| **`SubDrop-mac.dmg`** | macOS | Open DMG → **READ FIRST.html** → drag **SubDrop.app** to Applications. |
 | **`SubDrop-Setup.exe`** | Windows | **Recommended.** Run the installer → **SubDrop** in the Start menu; optional desktop shortcut on the last step. |
 | **`SubDrop.exe`** | Windows | Portable build (no installer). Build on Windows with `packaging\build-windows.ps1` (see **`WINDOWS-README.txt`**). |
 | **`install-linux.sh`** | Linux | `chmod +x install-linux.sh && ./install-linux.sh` — installs to `~/.local/share/subdrop`, commands `subdrop` and `subdrop-cli`. |
@@ -43,10 +43,11 @@ open dist/SubDrop-mac.dmg
 ```
 
 1. Open **`SubDrop-mac.dmg`**
-2. Double-click **`READ FIRST.html`** (Safari) — follow **Install SubDrop → Privacy & Security → Open Anyway** before the installer can run.
-3. Double-click **`Install SubDrop`**, click **Install SubDrop**, then open **SubDrop** from `~/Applications`.
+2. Double-click **`READ FIRST.html`** (Safari).
+3. Drag **`SubDrop.app`** to **Applications**.
+4. If macOS blocks it: **SubDrop → Privacy & Security → Open Anyway**, then open SubDrop from Applications.
 
-The installer does not auto-launch SubDrop (that can leave a stuck wait cursor after **Open Anyway**). Fully silent installs need Apple notarization — see `packaging/NOTARIZATION.md`.
+Fully silent installs need Apple notarization — see `packaging/NOTARIZATION.md`.
 
 See **`START HERE.txt`** on the disk image. Requires **Subliminal** (`pip3 install subliminal`).
 
@@ -132,7 +133,7 @@ This will:
 
 ### First launch (unsigned app)
 
-Use **Install SubDrop** on the DMG (recommended). If macOS blocks that helper once, **right-click Install SubDrop → Open**.
+If macOS blocks SubDrop, use **READ FIRST.html** on the DMG or **right-click SubDrop → Open**.
 
 If the Dock icon looks stale after an update, remove the app from the Dock and open it again from Applications.
 

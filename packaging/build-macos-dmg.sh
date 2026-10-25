@@ -12,16 +12,14 @@ python3 "$ROOT/generate_languages.py" "$ROOT/languages.json"
 rm -rf "$STAGE" "$DMG"
 mkdir -p "$STAGE"
 cp -R "$HOME/Applications/SubDrop.app" "$STAGE/"
-osacompile -o "$STAGE/Install SubDrop.app" "$ROOT/packaging/macos-install.applescript"
 if [[ -n "${APPLE_SIGNING_IDENTITY:-}" ]]; then
   chmod +x "$ROOT/packaging/sign-macos-apps.sh"
-  "$ROOT/packaging/sign-macos-apps.sh" "$STAGE/SubDrop.app" "$STAGE/Install SubDrop.app"
+  "$ROOT/packaging/sign-macos-apps.sh" "$STAGE/SubDrop.app"
 elif command -v codesign >/dev/null 2>&1; then
   codesign --force --deep --sign - "$STAGE/SubDrop.app" 2>/dev/null || true
-  codesign --force --deep --sign - "$STAGE/Install SubDrop.app" 2>/dev/null || true
   xattr -cr "$STAGE/SubDrop.app" 2>/dev/null || true
-  xattr -cr "$STAGE/Install SubDrop.app" 2>/dev/null || true
 fi
+ln -s /Applications "$STAGE/Applications"
 cp "$ROOT/packaging/macos-read-first.html" "$STAGE/READ FIRST.html"
 cp "$ROOT/packaging/MACOS-INSTALL.txt" "$STAGE/START HERE.txt"
 cp "$ROOT/README.md" "$STAGE/README.txt"
@@ -39,4 +37,4 @@ if [[ -n "${APPLE_SIGNING_IDENTITY:-}" && -n "${APPLE_ID:-}" ]]; then
 fi
 
 echo "Created: $DMG"
-echo "Users: open the DMG, double-click Install SubDrop.app"
+echo "Users: open the DMG, read READ FIRST.html, drag SubDrop.app to Applications."
