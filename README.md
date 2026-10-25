@@ -30,7 +30,7 @@ Pre-built artifacts are published on **[GitHub Releases](https://github.com/mowh
 
 | File | Platform | Install |
 |------|----------|---------|
-| **`SubDrop-mac.dmg`** | macOS | Open DMG → drag **SubDrop.app** to **Applications** → open (right-click → Open first time if blocked). |
+| **`SubDrop-mac.dmg`** | macOS | Open DMG → double-click **Install SubDrop** (fixes “damaged” automatically). |
 | **`SubDrop-Setup.exe`** | Windows | **Recommended.** Run the installer → **SubDrop** in the Start menu; optional desktop shortcut on the last step. |
 | **`SubDrop.exe`** | Windows | Portable build (no installer). Build on Windows with `packaging\build-windows.ps1` (see **`WINDOWS-README.txt`**). |
 | **`install-linux.sh`** | Linux | `chmod +x install-linux.sh && ./install-linux.sh` — installs to `~/.local/share/subdrop`, commands `subdrop` and `subdrop-cli`. |
@@ -42,18 +42,12 @@ Pre-built artifacts are published on **[GitHub Releases](https://github.com/mowh
 open dist/SubDrop-mac.dmg
 ```
 
-Drag **SubDrop.app** to **Applications**.
+1. Open **`SubDrop-mac.dmg`**
+2. Double-click **`Install SubDrop`** — it installs to `~/Applications`, clears the usual “damaged app” quarantine automatically, and opens SubDrop.
 
-If macOS says the app is **“damaged”** (common for unsigned downloads), remove the quarantine flag — the app is not corrupted:
+If macOS blocks **Install SubDrop** the first time: **right-click → Open → Open** (once), then run **Install SubDrop** again. No Terminal commands.
 
-```bash
-xattr -cr ~/Applications/SubDrop.app
-# or: xattr -cr /Applications/SubDrop.app
-```
-
-Then open SubDrop again (or right-click → **Open** the first time). The DMG includes **If macOS says damaged, read this.txt** with the same steps.
-
-Requires **Subliminal** installed (`pip3 install subliminal`).
+See **`START HERE.txt`** on the disk image. Requires **Subliminal** (`pip3 install subliminal`).
 
 ### Windows installer (end users)
 
@@ -137,10 +131,7 @@ This will:
 
 ### First launch (unsigned app)
 
-macOS may block the app because it is not signed:
-
-- **Right-click** `SubDrop.app` → **Open**, or  
-- Allow it under **System Settings → Privacy & Security**.
+Use **Install SubDrop** on the DMG (recommended). If macOS blocks that helper once, **right-click Install SubDrop → Open**.
 
 If the Dock icon looks stale after an update, remove the app from the Dock and open it again from Applications.
 

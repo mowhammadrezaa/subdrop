@@ -12,12 +12,14 @@ python3 "$ROOT/generate_languages.py" "$ROOT/languages.json"
 rm -rf "$STAGE" "$DMG"
 mkdir -p "$STAGE"
 cp -R "$HOME/Applications/SubDrop.app" "$STAGE/"
+osacompile -o "$STAGE/Install SubDrop.app" "$ROOT/packaging/macos-install.applescript"
 if command -v codesign >/dev/null 2>&1; then
   codesign --force --deep --sign - "$STAGE/SubDrop.app" 2>/dev/null || true
+  codesign --force --deep --sign - "$STAGE/Install SubDrop.app" 2>/dev/null || true
   xattr -cr "$STAGE/SubDrop.app" 2>/dev/null || true
+  xattr -cr "$STAGE/Install SubDrop.app" 2>/dev/null || true
 fi
-ln -s /Applications "$STAGE/Applications"
-cp "$ROOT/packaging/MACOS-INSTALL.txt" "$STAGE/If macOS says damaged, read this.txt"
+cp "$ROOT/packaging/MACOS-INSTALL.txt" "$STAGE/START HERE.txt"
 cp "$ROOT/README.md" "$STAGE/README.txt"
 
 hdiutil create \
@@ -28,4 +30,4 @@ hdiutil create \
   "$DMG"
 
 echo "Created: $DMG"
-echo "Users: open the DMG, drag SubDrop.app to Applications."
+echo "Users: open the DMG, double-click Install SubDrop.app"
