@@ -62,19 +62,53 @@ def normalize_srt(path: Path) -> None:
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
+def subliminal_download_argv(lang_code: str, video: Path) -> list[str]:
+    tail = [
+        "download",
+        "-f",
+        "-l",
+        lang_code,
+        "-p",
+        "opensubtitlescom",
+        "-p",
+        "opensubtitles",
+        "-e",
+        "utf-8",
+        "-s",
+        str(video),
+    ]
+    if getattr(sys, "frozen", False):
+        # Same .exe, CLI mode — must not start a second GUI window.
+        return [sys.executable, "--subliminal", *tail]
+    exe = shutil.which("subliminal")
+    if exe:
+        return [exe, *tail]
+    return [sys.executable, "-m", "subliminal", *tail]
+
+
+def _subprocess_kwargs() -> dict:
+    kwargs: dict = {}
+    if sys.platform == "win32":
+        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW  # type: ignore[attr-defined]
+    return kwargs
+
+
+def ensure_subliminal() -> None:
+    if getattr(sys, "frozen", False):
+        probe = [sys.executable, "--subliminal", "download", "--help"]
+    else:
+        probe = find_subliminal_command() + ["download", "--help"]
+    try:
+        subprocess.run(probe, capture_output=True, check=True, timeout=60, **_subprocess_kwargs())
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
+        raise RuntimeError("subliminal is not available in this SubDrop build.") from e
+
+
 def find_subliminal_command() -> list[str]:
     exe = shutil.which("subliminal")
     if exe:
         return [exe]
     return [sys.executable, "-m", "subliminal"]
-
-
-def ensure_subliminal() -> None:
-    cmd = find_subliminal_command() + ["download", "--help"]
-    try:
-        subprocess.run(cmd, capture_output=True, check=True, timeout=30)
-    except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
-        raise RuntimeError("subliminal is not installed. Run: pip install subliminal") from e
 
 
 def collect_videos(path: Path) -> list[Path]:
@@ -101,27 +135,19 @@ def process_video(video: Path, lang_code: str) -> Path:
     out = video.with_suffix(".srt")
     alt = video.parent / f"{video.stem}.{lang_code}.srt"
 
-    cmd = find_subliminal_command() + [
-        "download",
-        "-f",
-        "-l",
-        lang_code,
-        "-p",
-        "opensubtitlescom",
-        "-p",
-        "opensubtitles",
-        "-e",
-        "utf-8",
-        "-s",
-        str(video),
-    ]
+    cmd = subliminal_download_argv(lang_code, video)
 
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with LOG_PATH.open("w", encoding="utf-8") as log:
-        proc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT)
+        proc = subprocess.run(
+            cmd,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            **_subprocess_kwargs(),
+        )
 
     if proc.returncode != 0:
-        tail = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()[-6:]
+        tail = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()[-8:]
         raise RuntimeError("\n".join(tail) or f"subliminal failed (code {proc.returncode})")
 
     if not out.is_file() and alt.is_file():
@@ -145,7 +171,7 @@ def process_paths(paths: list[Path], lang_code: str) -> tuple[int, int, list[str
             try:
                 srt = process_video(video, lang_code)
                 ok += 1
-                messages.append(f"Saved {srt.name}")
+                messages.append(f"Saved {srt}")
             except Exception as e:
                 fail += 1
                 messages.append(f"{video.name}: {e}")

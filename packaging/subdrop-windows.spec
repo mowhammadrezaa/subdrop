@@ -8,7 +8,7 @@ from PyInstaller.utils.hooks import collect_all
 # SPECPATH is the directory that contains this .spec file (packaging/).
 ROOT = Path(SPECPATH).resolve().parent
 
-dnd_datas, dnd_binaries, dnd_hidden = collect_all("tkinterdnd2")
+dnd_datas, dnd_binaries, dnd_hidden = collect_all("windnd")
 
 a = Analysis(
     [str(ROOT / "subdrop_gui.py")],

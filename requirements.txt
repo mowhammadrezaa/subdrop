@@ -1,3 +1,4 @@
 subliminal>=2.1.0
 babelfish>=0.6.0
-tkinterdnd2>=0.4.0; platform_system == "Windows"
+windnd>=1.0.7; platform_system == "Windows"
+tkinterdnd2>=0.4.0; platform_system == "Linux"

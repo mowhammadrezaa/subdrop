@@ -3,6 +3,15 @@
 from __future__ import annotations
 
 import sys
+
+# PyInstaller: child process runs subliminal without loading the GUI (see core.py).
+if __name__ == "__main__" and len(sys.argv) >= 2 and sys.argv[1] == "--subliminal":
+    sys.argv = ["subliminal"] + sys.argv[2:]
+    from subliminal.cli import cli
+
+    cli()
+    raise SystemExit(0)
+
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -35,6 +44,7 @@ class SubDropApp(tk.Tk):
         self.search_var.trace_add("write", lambda *_: self._filter_languages())
         self.busy = False
         self._filtered: list[dict[str, str]] = []
+        self._dnd_enabled = False
 
         self._build_ui()
         self._register_dnd()
@@ -112,20 +122,40 @@ class SubDropApp(tk.Tk):
         self.status = tk.Label(self, text="", fg="gray", wraplength=500)
         self.status.pack(fill=tk.X, padx=12, pady=(0, 10))
         self.status.config(text=f"Language: {self.lang_name} ({self.lang_code})")
-        self._dnd_enabled = False
 
     def _register_dnd(self) -> None:
-        try:
-            from tkinterdnd2 import DND_FILES  # type: ignore
+        if sys.platform == "win32":
+            try:
+                import windnd  # type: ignore
 
-            self.drop.drop_target_register(DND_FILES)
-            self.drop.dnd_bind("<<Drop>>", self._on_drop)
-            self._dnd_enabled = True
-        except (ImportError, tk.TclError):
-            # Common in PyInstaller builds when the tkdnd Tcl extension is missing.
-            self.drop_msg.config(
-                text="Use “Choose video files…” below\n(drag-and-drop unavailable in this build)"
-            )
+                def on_drop(files: list[bytes]) -> None:
+                    paths = []
+                    for raw in files:
+                        text = raw.decode("utf-8") if isinstance(raw, bytes) else str(raw)
+                        paths.append(Path(text.strip()))
+                    if paths:
+                        self.after(0, lambda: self._run_jobs(paths))
+
+                windnd.hook_dropfiles(self, func=on_drop)
+                self._dnd_enabled = True
+                return
+            except Exception:
+                pass
+
+        if sys.platform != "win32":
+            try:
+                from tkinterdnd2 import DND_FILES  # type: ignore
+
+                self.drop.drop_target_register(DND_FILES)
+                self.drop.dnd_bind("<<Drop>>", self._on_drop)
+                self._dnd_enabled = True
+                return
+            except (ImportError, tk.TclError):
+                pass
+
+        self.drop_msg.config(
+            text="Use “Choose video files…” below\n(drag-and-drop unavailable in this build)"
+        )
 
     def _toggle_picker(self) -> None:
         if self.picker_open:
@@ -191,8 +221,10 @@ class SubDropApp(tk.Tk):
                 text = "\n".join(messages[-8:])
                 if fail:
                     self.after(0, lambda: messagebox.showwarning("SubDrop", text or "Some downloads failed."))
-                else:
+                elif ok:
                     self.after(0, lambda: messagebox.showinfo("SubDrop", text or f"Done — {ok} file(s)."))
+                else:
+                    self.after(0, lambda: messagebox.showwarning("SubDrop", "No videos processed."))
             except Exception as e:
                 self.after(0, lambda: messagebox.showerror("SubDrop", str(e)))
             finally:
