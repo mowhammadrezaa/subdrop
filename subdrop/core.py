@@ -133,6 +133,8 @@ def _patch_dogpile_dbm_for_frozen() -> None:
             trace("dogpile: using memory cache instead of dbm in frozen build")
             backend = "dogpile.cache.memory"
             arguments = None
+            # CliRunner reuses one process; subliminal configures the region on every run.
+            kwargs = {**kwargs, "replace_existing_backend": True}
         return _orig_configure(
             self,
             backend,
