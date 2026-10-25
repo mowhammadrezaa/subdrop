@@ -318,6 +318,12 @@ SubDrop.app/
 
 ---
 
+## Contact
+
+Report bugs or feedback: **[m.hosseini.eng@outlook.com](mailto:m.hosseini.eng@outlook.com)**
+
+---
+
 ## License
 
 SubDrop is personal/local tooling. Third-party services (OpenSubtitles) and software (Subliminal) have their own terms of use — comply with their rules when downloading subtitles.

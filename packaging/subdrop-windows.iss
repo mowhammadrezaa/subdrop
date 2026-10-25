@@ -7,6 +7,7 @@
 
 #define MyAppName "SubDrop"
 #define MyAppPublisher "SubDrop"
+#define MyAppPublisherEmail "m.hosseini.eng@outlook.com"
 #define MyAppURL "https://github.com/mowhammadrezaa/subdrop"
 #define MyAppExeName "SubDrop.exe"
 
@@ -17,6 +18,8 @@ AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
+AppSupportURL=mailto:{#MyAppPublisherEmail}
+AppContact={#MyAppPublisherEmail}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}/releases
 DefaultDirName={autopf}\{#MyAppName}
@@ -55,4 +58,4 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent unchecked
 
 [Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%nSubDrop downloads UTF-8 subtitles next to your video files (drag-and-drop or file picker). Internet is required for OpenSubtitles.
+WelcomeLabel2=This will install [name/ver] on your computer.%n%nSubDrop downloads UTF-8 subtitles next to your video files (drag-and-drop or file picker). Internet is required for OpenSubtitles.%n%nReport issues: m.hosseini.eng@outlook.com

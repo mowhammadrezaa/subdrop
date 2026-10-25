@@ -38,6 +38,7 @@ if str(ROOT) not in sys.path:
 
 from subdrop.core import (  # noqa: E402
     CRASH_LOG_PATH,
+    CREATOR_EMAIL,
     LOG_PATH,
     TRACE_LOG_PATH,
     load_languages,
@@ -181,8 +182,23 @@ class SubDropApp(tk.Tk):
         ttk.Button(self.drop, text="Choose video files…", command=self._pick_files).pack(pady=4)
 
         self.status = tk.Label(self, text="", fg="gray", wraplength=500)
-        self.status.pack(fill=tk.X, padx=12, pady=(0, 10))
+        self.status.pack(fill=tk.X, padx=12, pady=(0, 4))
         self.status.config(text=f"Language: {self.lang_name} ({self.lang_code})")
+
+        self.footer = tk.Label(
+            self,
+            text=f"Report issues: {CREATOR_EMAIL}",
+            fg="gray",
+            font=("", 9),
+            cursor="hand2",
+        )
+        self.footer.pack(fill=tk.X, padx=12, pady=(0, 10))
+        self.footer.bind("<Button-1>", self._open_creator_email)
+
+    def _open_creator_email(self, _event: object = None) -> None:
+        import webbrowser
+
+        webbrowser.open(f"mailto:{CREATOR_EMAIL}")
 
     def _register_dnd(self) -> None:
         if sys.platform == "win32":

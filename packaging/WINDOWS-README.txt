@@ -24,4 +24,6 @@ First run on a new PC:
 Optional: install Subliminal globally instead of relying on the bundle:
   pip install subliminal
 
+Report issues: m.hosseini.eng@outlook.com
+
 References: see README.md

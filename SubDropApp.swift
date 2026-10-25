@@ -226,13 +226,14 @@ struct DropView: View {
     }
 
     private let dropZoneHeight: CGFloat = 200
-    private let windowHeight: CGFloat = 620
+    private let windowHeight: CGFloat = 640
+    private let creatorEmail = "m.hosseini.eng@outlook.com"
     private let windowWidth: CGFloat = 560
     private let outerPadding: CGFloat = 20
 
     /// Space above the fixed drop zone (banner + optional language list).
     private var upperSectionHeight: CGFloat {
-        windowHeight - (outerPadding * 2) - dropZoneHeight - 36
+        windowHeight - (outerPadding * 2) - dropZoneHeight - 52
     }
 
     private var compactBannerHeight: CGFloat { 48 }
@@ -288,6 +289,8 @@ struct DropView: View {
                 .frame(height: dropZoneHeight)
 
             statusSection
+
+            creatorFooter
         }
         .padding(outerPadding)
         .frame(width: windowWidth, height: windowHeight)
@@ -506,6 +509,16 @@ struct DropView: View {
                     .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    private var creatorFooter: some View {
+        Link(
+            "Report issues: \(creatorEmail)",
+            destination: URL(string: "mailto:\(creatorEmail)")!
+        )
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity)
     }
 
     private func loadDropped(_ providers: [NSItemProvider]) {

@@ -11,6 +11,7 @@ import threading
 from pathlib import Path
 
 VIDEO_EXTENSIONS = {".mkv", ".mp4", ".m4v", ".mov", ".avi", ".webm", ".ts", ".m2ts"}
+CREATOR_EMAIL = "m.hosseini.eng@outlook.com"
 LOG_PATH = Path(os.environ.get("SUBDROP_LOG", Path(tempfile.gettempdir()) / "subdrop-last.log"))
 CRASH_LOG_PATH = Path(tempfile.gettempdir()) / "subdrop-crash.log"
 TRACE_LOG_PATH = Path(tempfile.gettempdir()) / "subdrop-trace.log"
