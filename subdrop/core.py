@@ -124,9 +124,9 @@ def _run_subliminal_inprocess(args: list[str]) -> None:
 
     trace(f"subliminal inprocess args={args}")
     _append_log(f"inprocess: {' '.join(args)}")
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(subliminal, args, catch_exceptions=False)
-    output = (result.output or "") + (result.stderr or "")
+    output = result.output or ""
     if result.exception:
         import traceback as _tb
 
