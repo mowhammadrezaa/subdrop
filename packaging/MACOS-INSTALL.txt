@@ -1,23 +1,31 @@
 Install SubDrop (macOS)
 =======================
 
-EASIEST (recommended)
----------------------
-1. Open this disk image.
-2. Double-click  "Install SubDrop"
-3. If macOS asks whether to open it, click Open.
+macOS may say Apple “could not verify” Install SubDrop or SubDrop.
+That is Gatekeeper (not a virus). SubDrop is not notarized yet.
 
-   If macOS will not open "Install SubDrop" at all:
-   Right-click "Install SubDrop" → Open → Open (one time only).
-   Then double-click "Install SubDrop" again.
+ONE-TIME FIX (no Terminal)
+--------------------------
+1. Double-click  Install SubDrop  once (it may be blocked).
 
-The installer copies SubDrop, fixes the "damaged app" quarantine issue
-automatically, and launches the app. No Terminal commands.
+2. Open  System Settings  →  Privacy & Security .
 
-Manual install (optional)
--------------------------
-Drag SubDrop.app to Applications, then double-click Install SubDrop once
-(or contact support — manual drag may show "damaged" until fixed).
+3. Scroll down in Security. You should see a message about
+   Install SubDrop being blocked.
+
+4. Click  Open Anyway , then confirm.
+
+5. Double-click  Install SubDrop  again → click  Open .
+
+   Alternative to step 4–5: right-click  Install SubDrop  →  Open  →  Open .
+
+6. The installer copies SubDrop, removes the “damaged app” quarantine,
+   and launches the app.
+
+EASIEST
+-------
+Double-click  Install SubDrop  and follow the on-screen dialog
+(“Open Settings” opens Privacy & Security for you).
 
 Subliminal (required for downloads)
 -----------------------------------

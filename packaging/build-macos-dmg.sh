@@ -13,7 +13,10 @@ rm -rf "$STAGE" "$DMG"
 mkdir -p "$STAGE"
 cp -R "$HOME/Applications/SubDrop.app" "$STAGE/"
 osacompile -o "$STAGE/Install SubDrop.app" "$ROOT/packaging/macos-install.applescript"
-if command -v codesign >/dev/null 2>&1; then
+if [[ -n "${APPLE_SIGNING_IDENTITY:-}" ]]; then
+  chmod +x "$ROOT/packaging/sign-macos-apps.sh"
+  "$ROOT/packaging/sign-macos-apps.sh" "$STAGE/SubDrop.app" "$STAGE/Install SubDrop.app"
+elif command -v codesign >/dev/null 2>&1; then
   codesign --force --deep --sign - "$STAGE/SubDrop.app" 2>/dev/null || true
   codesign --force --deep --sign - "$STAGE/Install SubDrop.app" 2>/dev/null || true
   xattr -cr "$STAGE/SubDrop.app" 2>/dev/null || true
@@ -28,6 +31,11 @@ hdiutil create \
   -ov \
   -format UDZO \
   "$DMG"
+
+if [[ -n "${APPLE_SIGNING_IDENTITY:-}" && -n "${APPLE_ID:-}" ]]; then
+  chmod +x "$ROOT/packaging/notarize-macos.sh"
+  "$ROOT/packaging/notarize-macos.sh" "$DMG"
+fi
 
 echo "Created: $DMG"
 echo "Users: open the DMG, double-click Install SubDrop.app"
