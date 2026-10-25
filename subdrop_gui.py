@@ -4,6 +4,11 @@ from __future__ import annotations
 
 import sys
 
+if sys.platform == "win32" and getattr(sys, "frozen", False):
+    import multiprocessing
+
+    multiprocessing.freeze_support()
+
 # PyInstaller: child process runs subliminal without loading the GUI (see core.py).
 if __name__ == "__main__" and len(sys.argv) >= 2 and sys.argv[1] == "--subliminal":
     sys.argv = ["subliminal"] + sys.argv[2:]
@@ -50,12 +55,20 @@ def _decode_dropped_path(raw: object) -> Path:
 
 
 def install_exception_hooks() -> None:
+    import faulthandler
+
+    try:
+        CRASH_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        fault_file = CRASH_LOG_PATH.open("a", encoding="utf-8")
+        faulthandler.enable(file=fault_file, all_threads=True)
+    except OSError:
+        faulthandler.enable()
+
     def log_exc(exc_type, exc, tb) -> None:
         try:
-            CRASH_LOG_PATH.write_text(
-                "".join(traceback.format_exception(exc_type, exc, tb)),
-                encoding="utf-8",
-            )
+            with CRASH_LOG_PATH.open("a", encoding="utf-8") as f:
+                f.write("".join(traceback.format_exception(exc_type, exc, tb)))
+                f.flush()
         except OSError:
             pass
 
@@ -302,6 +315,10 @@ class SubDropApp(tk.Tk):
 
 def main() -> None:
     install_exception_hooks()
+    try:
+        LOG_PATH.write_text(f"SubDrop started argv={sys.argv!r}\n", encoding="utf-8")
+    except OSError:
+        pass
     SubDropApp().mainloop()
 
 

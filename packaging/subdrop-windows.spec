@@ -19,7 +19,6 @@ a = Analysis(
         "babelfish",
         "subliminal",
         "subliminal.cli.cli",
-        "click.testing",
         "guessit",
         "dogpile",
         "stevedore",

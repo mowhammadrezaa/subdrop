@@ -89,24 +89,36 @@ def _write_log(text: str) -> None:
     LOG_PATH.write_text(text, encoding="utf-8", errors="replace")
 
 
-def _run_subliminal_inprocess(args: list[str]) -> None:
-    """Run subliminal inside this process (required for PyInstaller one-file EXE)."""
-    from click.testing import CliRunner
-    from subliminal.cli.cli import subliminal
+def _append_log(line: str) -> None:
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with LOG_PATH.open("a", encoding="utf-8", errors="replace") as f:
+        f.write(line)
+        if not line.endswith("\n"):
+            f.write("\n")
+        f.flush()
 
-    runner = CliRunner()
-    result = runner.invoke(subliminal, args, catch_exceptions=False)
-    output = result.output or ""
-    if result.exception:
-        import traceback
 
-        output += "\n" + "".join(
-            traceback.format_exception(type(result.exception), result.exception, result.exception.__traceback__)
+def _frozen_subliminal_cmd(args: list[str]) -> list[str]:
+    """Re-invoke this EXE in CLI-only mode (see subdrop_gui.py --subliminal)."""
+    return [sys.executable, "--subliminal", *args]
+
+
+def _run_subliminal_subprocess(args: list[str]) -> None:
+    """Separate process — safe with tkinter (never use CliRunner from a worker thread)."""
+    cmd = _frozen_subliminal_cmd(args)
+    _append_log(f"cmd: {' '.join(cmd)}")
+    with LOG_PATH.open("a", encoding="utf-8", errors="replace") as log:
+        log.write("\n--- subliminal ---\n")
+        log.flush()
+        proc = subprocess.run(
+            cmd,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            **_subprocess_kwargs(),
         )
-    _write_log(output)
-    if result.exit_code != 0:
-        tail = output.strip().splitlines()[-12:]
-        raise RuntimeError("\n".join(tail) or f"subliminal failed (exit {result.exit_code})")
+    if proc.returncode != 0:
+        tail = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()[-16:]
+        raise RuntimeError("\n".join(tail) or f"subliminal failed (code {proc.returncode})")
 
 
 def subliminal_download_argv(lang_code: str, video: Path) -> list[str]:
@@ -126,11 +138,17 @@ def _subprocess_kwargs() -> dict:
 
 def ensure_subliminal() -> None:
     if _is_frozen():
-        from click.testing import CliRunner
-        from subliminal.cli.cli import subliminal
-
-        result = CliRunner().invoke(subliminal, ["download", "--help"])
-        if result.exit_code != 0:
+        cmd = _frozen_subliminal_cmd(["download", "--help"])
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                timeout=120,
+                **_subprocess_kwargs(),
+            )
+        except (OSError, subprocess.TimeoutExpired) as e:
+            raise RuntimeError("subliminal is not available in this SubDrop build.") from e
+        if proc.returncode != 0:
             raise RuntimeError("subliminal is not available in this SubDrop build.")
         return
 
@@ -173,7 +191,8 @@ def process_video(video: Path, lang_code: str) -> Path:
     alt = video.parent / f"{video.stem}.{lang_code}.srt"
 
     if _is_frozen():
-        _run_subliminal_inprocess(_download_cli_args(lang_code, video))
+        _append_log(f"video: {video}")
+        _run_subliminal_subprocess(_download_cli_args(lang_code, video))
     else:
         cmd = subliminal_download_argv(lang_code, video)
         with LOG_PATH.open("w", encoding="utf-8") as log:
@@ -200,7 +219,9 @@ def process_video(video: Path, lang_code: str) -> Path:
 
 
 def process_paths(paths: list[Path], lang_code: str) -> tuple[int, int, list[str]]:
+    _write_log(f"SubDrop process_paths lang={lang_code} paths={len(paths)}\n")
     ensure_subliminal()
+    _append_log("ensure_subliminal ok")
     ok, fail = 0, 0
     messages: list[str] = []
     for raw in paths:
