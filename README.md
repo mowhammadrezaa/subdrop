@@ -5,7 +5,7 @@
 | Platform | Experience |
 |----------|------------|
 | **macOS** | Native SwiftUI app (`SubDrop.app`) |
-| **Windows** | `SubDrop.exe` (PyInstaller; build on Windows) |
+| **Windows** | `SubDrop-Setup.exe` installer (Start menu + optional desktop shortcut) or portable `SubDrop.exe` |
 | **Linux** | `install-linux.sh` → `subdrop` GUI + `subdrop-cli` |
 
 Inspired by “drop zone” utilities: open the app, drop one or many videos (or a folder), pick a language, and subtitles are fetched automatically.
@@ -31,7 +31,8 @@ Pre-built artifacts are published on **[GitHub Releases](https://github.com/mowh
 | File | Platform | Install |
 |------|----------|---------|
 | **`SubDrop-mac.dmg`** | macOS | Open DMG → drag **SubDrop.app** to **Applications** → open (right-click → Open first time if blocked). |
-| **`SubDrop.exe`** | Windows | Build on a Windows PC with `packaging\build-windows.ps1` (see **`WINDOWS-README.txt`**). PyInstaller cannot build `.exe` on macOS. |
+| **`SubDrop-Setup.exe`** | Windows | **Recommended.** Run the installer → **SubDrop** in the Start menu; optional desktop shortcut on the last step. |
+| **`SubDrop.exe`** | Windows | Portable build (no installer). Build on Windows with `packaging\build-windows.ps1` (see **`WINDOWS-README.txt`**). |
 | **`install-linux.sh`** | Linux | `chmod +x install-linux.sh && ./install-linux.sh` — installs to `~/.local/share/subdrop`, commands `subdrop` and `subdrop-cli`. |
 | **`subdrop-src.tar.gz`** | All | Full source for developers and for building the Windows `.exe`. |
 
@@ -43,9 +44,15 @@ open dist/SubDrop-mac.dmg
 
 Drag **SubDrop.app** to **Applications**. Requires **Subliminal** installed (`pip3 install subliminal`).
 
-### Windows `.exe` (build once, then ship)
+### Windows installer (end users)
 
-On **Windows 10/11** with Python 3.10+:
+1. Download **`SubDrop-Setup.exe`** from [Releases](https://github.com/mowhammadrezaa/subdrop/releases).
+2. Run the wizard (installs under `%LocalAppData%\Programs\SubDrop` by default).
+3. Open **SubDrop** from the Start menu. On the final screen you can enable **Create a desktop icon** and launch the app.
+
+### Windows build (developers)
+
+On **Windows 10/11** with Python 3.10+ and [Inno Setup 6](https://jrsoftware.org/isinfo.php):
 
 ```powershell
 tar -xf subdrop-src.tar.gz   # or clone/copy source
@@ -53,7 +60,7 @@ cd subdrop   # project root
 .\packaging\build-windows.ps1
 ```
 
-Output: **`dist\SubDrop.exe`** (windowed GUI). Users need internet for OpenSubtitles.
+Output: **`dist\SubDrop-Setup.exe`** (installer) and **`dist\SubDrop.exe`** (portable). Users need internet for OpenSubtitles.
 
 ### Linux (install script)
 

@@ -16,6 +16,37 @@ if (-not (Test-Path "$Root\dist\SubDrop.exe")) {
   throw "dist\SubDrop.exe was not created"
 }
 
+$iconPng = Join-Path $Root "AppIcon-1024.png"
+$iconIco = Join-Path $Root "dist\SubDrop.ico"
+if (Test-Path $iconPng) {
+  python -c @"
+from pathlib import Path
+from PIL import Image
+src = Path(r'$iconPng')
+dst = Path(r'$iconIco')
+img = Image.open(src).convert('RGBA')
+sizes = [(256, 256), (64, 64), (48, 48), (32, 32), (16, 16)]
+img.save(dst, format='ICO', sizes=sizes)
+print('Wrote', dst)
+"@
+}
+
+$installerScript = Join-Path $Root "packaging\build-windows-installer.ps1"
+$iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+if (-not (Test-Path $iscc)) {
+  $iscc = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+}
+if ((Test-Path $iscc) -and (Test-Path $iconIco)) {
+  & $installerScript
+} elseif ($env:GITHUB_ACTIONS -eq "true") {
+  throw "Inno Setup or SubDrop.ico missing; install Inno Setup on the runner (choco install innosetup)"
+} else {
+  Write-Warning "Skip installer: install Inno Setup 6 to build dist\SubDrop-Setup.exe"
+}
+
 Write-Host ""
 Write-Host "Built: $Root\dist\SubDrop.exe"
-Write-Host "Distribute dist\SubDrop.exe (users still need network; first run may be slow)."
+if (Test-Path "$Root\dist\SubDrop-Setup.exe") {
+  Write-Host "Built: $Root\dist\SubDrop-Setup.exe (recommended for end users)"
+}
+Write-Host "Users need internet for OpenSubtitles; first run may be slow."

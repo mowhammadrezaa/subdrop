@@ -41,16 +41,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Build SubDrop.exe
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build SubDrop.exe and installer
         shell: pwsh
         run: |
           ./packaging/build-windows.ps1
 
-      - name: Upload EXE
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: dist/SubDrop.exe
+          path: |
+            dist/SubDrop.exe
+            dist/SubDrop-Setup.exe
           if-no-files-found: error
 
   build-linux:
@@ -106,5 +111,6 @@ jobs:
           files: |
             release-assets/macos-dmg/SubDrop-mac.dmg
             release-assets/windows-exe/SubDrop.exe
+            release-assets/windows-exe/SubDrop-Setup.exe
             release-assets/linux-packages/install-linux.sh
             release-assets/linux-packages/subdrop-src.tar.gz

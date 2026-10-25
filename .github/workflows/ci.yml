@@ -24,12 +24,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Build EXE
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+      - name: Build EXE and installer
         shell: pwsh
         run: ./packaging/build-windows.ps1
-      - name: Verify EXE
+      - name: Verify Windows artifacts
         shell: pwsh
-        run: Test-Path dist/SubDrop.exe
+        run: |
+          if (-not (Test-Path dist/SubDrop.exe)) { throw "missing SubDrop.exe" }
+          if (-not (Test-Path dist/SubDrop-Setup.exe)) { throw "missing SubDrop-Setup.exe" }
 
   build-linux:
     runs-on: ubuntu-latest
