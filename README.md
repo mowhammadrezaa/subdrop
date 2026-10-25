@@ -30,7 +30,7 @@ Pre-built artifacts are published on **[GitHub Releases](https://github.com/mowh
 
 | File | Platform | Install |
 |------|----------|---------|
-| **`SubDrop-mac.dmg`** | macOS | Open DMG → **READ FIRST.html** → drag **SubDrop.app** to Applications. |
+| **`SubDrop-mac.dmg`** | macOS | Open DMG → drag **SubDrop** to **Applications** (on-screen arrow). |
 | **`SubDrop-Setup.exe`** | Windows | **Recommended.** Run the installer → **SubDrop** in the Start menu; optional desktop shortcut on the last step. |
 | **`SubDrop.exe`** | Windows | Portable build (no installer). Build on Windows with `packaging\build-windows.ps1` (see **`WINDOWS-README.txt`**). |
 | **`install-linux.sh`** | Linux | `chmod +x install-linux.sh && ./install-linux.sh` — installs to `~/.local/share/subdrop`, commands `subdrop` and `subdrop-cli`. |
@@ -42,10 +42,9 @@ Pre-built artifacts are published on **[GitHub Releases](https://github.com/mowh
 open dist/SubDrop-mac.dmg
 ```
 
-1. Open **`SubDrop-mac.dmg`**
-2. Double-click **`READ FIRST.html`** (Safari).
-3. Drag **`SubDrop.app`** to **Applications**.
-4. If macOS blocks it: **SubDrop → Privacy & Security → Open Anyway**, then open SubDrop from Applications.
+1. Open **`SubDrop-mac.dmg`** — you should see only **SubDrop** and **Applications** with a drag arrow.
+2. Drag **SubDrop** onto **Applications**.
+3. If macOS blocks it: **SubDrop → Privacy & Security → Open Anyway**, then open SubDrop from Applications (see `INSTALL.txt` inside the app bundle).
 
 Fully silent installs need Apple notarization — see `packaging/NOTARIZATION.md`.
 

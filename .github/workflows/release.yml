@@ -17,6 +17,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install create-dmg
+        run: brew install create-dmg
+
       - name: Build SubDrop.app and DMG
         run: |
           chmod +x install.sh packaging/build-macos-dmg.sh build_icon.sh fetch.sh
